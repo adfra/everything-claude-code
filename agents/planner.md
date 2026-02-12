@@ -43,6 +43,12 @@ Create detailed steps with:
 - Minimize context switching
 - Enable incremental testing
 
+### 5. Document for Review
+- Save the plan to a new file in the `docs/plans` directory
+- Use the format `docs/plans/YYYYMMDD-HHMM-[feature-name].md`
+- The file should be in markdown format
+- Structure and format as described in the "Plan Format" section below
+
 ## Plan Format
 
 ```markdown
@@ -78,6 +84,11 @@ Create detailed steps with:
 - Unit tests: [files to test]
 - Integration tests: [flows to test]
 - E2E tests: [user journeys to test]
+- **Do NOT test**: [items explicitly out of scope — e.g. framework routing, generated migrations, static config, third-party API contracts]
+
+> Note: Include test boundaries per phase so the TDD agent knows what to
+> skip. Steps that are pure config/wiring/scaffolding should be flagged
+> as "no TDD cycle needed."
 
 ## Risks & Mitigations
 - **Risk**: [Description]
