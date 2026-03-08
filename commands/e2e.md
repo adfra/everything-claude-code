@@ -34,139 +34,17 @@ The e2e-runner agent will:
 5. **Generate report** with results and artifacts
 6. **Identify flaky tests** and recommend fixes
 
-## Example Usage
-
-```
-User: /e2e Test the market search and view flow
-
-Agent (e2e-runner):
-# E2E Test Generation: Market Search and View Flow
-
-## Test Scenario Identified
-
-**User Journey:** Market Search → View Results → Click Market → View Details
-
-**Test Coverage:**
-1. Navigate to markets page
-2. Perform semantic search
-3. Verify search results
-4. Click on first result
-5. Verify market details page loads
-6. Verify chart renders
-
-## Generated Test Code
-
-```typescript
-// tests/e2e/markets/search-and-view.spec.ts
-import { test, expect } from '@playwright/test'
-import { MarketsPage } from '../../pages/MarketsPage'
-import { MarketDetailsPage } from '../../pages/MarketDetailsPage'
-
-test.describe('Market Search and View Flow', () => {
-  test('user can search markets and view details', async ({ page }) => {
-    // 1. Navigate to markets page
-    const marketsPage = new MarketsPage(page)
-    await marketsPage.goto()
-
-    // Verify page loaded
-    await expect(page).toHaveTitle(/Markets/)
-    await expect(page.locator('h1')).toContainText('Markets')
-
-    // 2. Perform semantic search
-    await marketsPage.searchMarkets('election')
-
-    // Wait for API response
-    await page.waitForResponse(resp =>
-      resp.url().includes('/api/markets/search') && resp.status() === 200
-    )
-
-    // 3. Verify search results
-    const marketCards = marketsPage.marketCards
-    await expect(marketCards.first()).toBeVisible()
-    const resultCount = await marketCards.count()
-    expect(resultCount).toBeGreaterThan(0)
-
-    // Take screenshot of search results
-    await page.screenshot({ path: 'artifacts/search-results.png' })
-
-    // 4. Click on first result
-    const firstMarketTitle = await marketCards.first().textContent()
-    await marketCards.first().click()
-
-    // 5. Verify market details page loads
-    await expect(page).toHaveURL(/\/markets\/[a-z0-9-]+/)
-
-    const detailsPage = new MarketDetailsPage(page)
-    await expect(detailsPage.marketName).toBeVisible()
-    await expect(detailsPage.marketDescription).toBeVisible()
-
-    // 6. Verify chart renders
-    await expect(detailsPage.priceChart).toBeVisible()
-
-    // Verify market name matches
-    const detailsTitle = await detailsPage.marketName.textContent()
-    expect(detailsTitle?.toLowerCase()).toContain(
-      firstMarketTitle?.toLowerCase().substring(0, 20) || ''
-    )
-
-    // Take screenshot of market details
-    await page.screenshot({ path: 'artifacts/market-details.png' })
-  })
-
-  test('search with no results shows empty state', async ({ page }) => {
-    const marketsPage = new MarketsPage(page)
-    await marketsPage.goto()
-
-    // Search for non-existent market
-    await marketsPage.searchMarkets('xyznonexistentmarket123456')
-
-    // Verify empty state
-    await expect(page.locator('[data-testid="no-results"]')).toBeVisible()
-    await expect(page.locator('[data-testid="no-results"]')).toContainText(
-      /no.*results|no.*markets/i
-    )
-
-    const marketCount = await marketsPage.marketCards.count()
-    expect(marketCount).toBe(0)
-  })
-
-  test('can clear search and see all markets again', async ({ page }) => {
-    const marketsPage = new MarketsPage(page)
-    await marketsPage.goto()
-
-    // Initial market count
-    const initialCount = await marketsPage.marketCards.count()
-
-    // Perform search
-    await marketsPage.searchMarkets('trump')
-    await page.waitForLoadState('networkidle')
-
-    // Verify filtered results
-    const filteredCount = await marketsPage.marketCards.count()
-    expect(filteredCount).toBeLessThan(initialCount)
-
-    // Clear search
-    await marketsPage.searchInput.clear()
-    await page.waitForLoadState('networkidle')
-
-    // Verify all markets shown again
-    const finalCount = await marketsPage.marketCards.count()
-    expect(finalCount).toBe(initialCount)
-  })
-})
-```
-
 ## Running Tests
 
 ```bash
 # Run the generated test
-npx playwright test tests/e2e/markets/search-and-view.spec.ts
+npx playwright test tests/e2e/markets/[filename].spec.ts
 
 Running 3 tests using 3 workers
 
-  ✓  [chromium] › search-and-view.spec.ts:5:3 › user can search markets and view details (4.2s)
-  ✓  [chromium] › search-and-view.spec.ts:52:3 › search with no results shows empty state (1.8s)
-  ✓  [chromium] › search-and-view.spec.ts:67:3 › can clear search and see all markets again (2.9s)
+  ✓  [chromium] › [filename].spec.ts:5:3 › user can search markets and view details (4.2s)
+  ✓  [chromium] › [filename].spec.ts:52:3 › search with no results shows empty state (1.8s)
+  ✓  [chromium] › [filename].spec.ts:67:3 › can clear search and see all markets again (2.9s)
 
   3 passed (9.1s)
 
@@ -281,27 +159,6 @@ Add to your CI pipeline:
     path: playwright-report/
 ```
 
-## PMX-Specific Critical Flows
-
-For PMX, prioritize these E2E tests:
-
-**🔴 CRITICAL (Must Always Pass):**
-1. User can connect wallet
-2. User can browse markets
-3. User can search markets (semantic search)
-4. User can view market details
-5. User can place trade (with test funds)
-6. Market resolves correctly
-7. User can withdraw funds
-
-**🟡 IMPORTANT:**
-1. Market creation flow
-2. User profile updates
-3. Real-time price updates
-4. Chart rendering
-5. Filter and sort markets
-6. Mobile responsive layout
-
 ## Best Practices
 
 **DO:**
@@ -319,14 +176,6 @@ For PMX, prioritize these E2E tests:
 - ❌ Ignore flaky tests
 - ❌ Skip artifact review on failures
 - ❌ Test every edge case with E2E (use unit tests)
-
-## Important Notes
-
-**CRITICAL for PMX:**
-- E2E tests involving real money MUST run on testnet/staging only
-- Never run trading tests against production
-- Set `test.skip(process.env.NODE_ENV === 'production')` for financial tests
-- Use test wallets with small test funds only
 
 ## Integration with Other Commands
 
